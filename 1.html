@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<style>
+    table{
+        width:1000px;
+        margin: auto;
+        border: 1px solid #000000;
+        border-collapse: collapse;
+    }
+    td,th{
+        width: 25%;
+        height: 30px;
+        text-align: center;
+        line-height: 30px;
+        border: 1px solid #000000;
+        border-top:0;
+    }
+    .add{
+        width: 998px;
+        height: 30px;
+        margin: auto;
+        text-align: center;
+        line-height: 30px;
+        display: block;
+        color: #FF0000;
+        border: 1px solid #000000;
+        border-top:0;
+        cursor: pointer;
+    }
+    .del{
+        cursor: pointer;
+        color: aqua;
+    }
+    .wait{
+        width: 5px;
+        height: 20px;
+        position: fixed;
+        left:0;
+        top:0;
+        bottom:0;
+        right:0;
+        background: #000000;
+        margin: auto;
+        animation: wait 1s ease infinite alternate 1s;
+    }
+    .wait:before{
+        width: 5px;
+        height: 15px;
+        background: #000;
+        position: absolute;
+        top:0;
+        left:10px;
+        display: block;
+        animation-delay: -1s; /*延迟时间*/
+        content: "";/*撑开容器*/
+    }
+    .wait:after{
+        width: 5px;
+        height: 15px;
+        background: #000;
+        position: absolute;
+        top:0;
+        left:20px;
+        display: block;
+        content: "";
+    }
+    @keyframes wait {/*动画，关键帧  加动画的名称*/
+        0%{
+            transform: scale(1);/*缩放函数*/
+        }
+        100%{
+            transform: scale(2,2);
+        }
+    }
+</style>
+<script src="ajax.js"></script>
+<script src="jquery.js"></script>
+<script>
+    window.onload=function () {
+        $(".wait").css("display","block");
+        $.ajax({
+            url:"1.php",
+            dataType:"json",
+            success:function (e) {
+                $(".wait").css("display","none");
+                var str="";
+                for(var i=0;i<e.length;i++){
+                    str+="<tr id="+e[i].id+">";
+                    str+="<td attr='name'>"+e[i].name+"</td>";
+                    str+="<td attr='age'>"+e[i].age+"</td>";
+                    str+="<td attr='sex'>"+e[i].sex+"</td>";
+                    str+="<td><div class='del'>删除</div></td>";
+                    str+="</tr>";
+                }
+                $("tbody").html(str);
+            }
+        })
+        $(".add").click(function () {
+            $(".wait").css("display","block");
+            $.ajax({
+                url:"add.php",
+                success:function (e) {
+                    $(".wait").css("display","none");
+                    var str="";
+                    str+="<tr id="+e+">";
+                    str+="<td attr='name'></td>";
+                    str+="<td attr='age'></td>";
+                    str+="<td attr='sex'></td>";
+                    str+="<td><div class='del'>删除</div></td>";
+                    str+="</tr>";
+                    $("tbody").append(str);
+                }
+            })
+        })
+        $("tbody").delegate(".del","click",function () {
+            $(".wait").css("display","block");
+            var parent=$(this).parent().parent();
+            var id=parent.attr("id");
+            $.ajax({
+                url:"del.php",
+                data:{id:id},
+                success:function (e) {
+                    $(".wait").css("display","none");
+                    parent.remove();
+                }
+            })
+        })
+        $("tbody").delegate("td:not(.del)","dblclick",function () {
+
+            var that=$(this);
+            var oldv=$(this).html();
+            $(this).html("");
+            var input=$("<input>").val(oldv).appendTo(this);
+            input.focus();
+            input.blur(function () {
+                $(".wait").css("display","block");
+                var newv=$(this).val();
+                var id=that.parent().attr("id");
+                var attr=that.attr("attr");
+                console.log(newv,id,attr);
+                if(newv==oldv){
+                    $(".wait").css("display","none");
+                    input.remove();
+                    that.html(newv);
+                }else{
+                    $.ajax({
+                        url:"insert.php",
+                        data:{id:id,attr:attr,value:newv},
+                        success:function (e) {
+                            $(".wait").css("display","none");
+                            //console.log(newv);
+                            input.remove();
+                            that.html(newv);
+                        }
+                    })
+                }
+
+            })
+        })
+    }
+</script>
+<body>
+<table>
+    <thead>
+        <tr>
+            <th>姓名</th>
+            <th>年龄</th>
+            <th>性别</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<div class="add">+</div>
+<div class="wait"></div>
+</body>
+</html>
